@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kos59125/Mock-n-Moll.svg)](https://travis-ci.org/kos59125/Mock-n-Moll)
+
 Mock 'n' Moll
 =============
 
