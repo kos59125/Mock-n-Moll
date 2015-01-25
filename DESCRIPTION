@@ -1,0 +1,11 @@
+Package: MockNMoll
+Type: Package
+Title: Mock 'n' Moll
+Version: 0.1
+Date: 2015-01-25
+Author: Kosei ABE
+Maintainer: Kosei ABE <mail@recyclebin.jp>
+Description: Creates a mock function
+License: BSD_3_clause + file LICENSE
+BugReports: https://github.com/kos59125/mocknmoll/issues
+Suggests: testthat
