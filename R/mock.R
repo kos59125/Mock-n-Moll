@@ -1,37 +1,34 @@
-#' Mocking
+#' Stubbing
 #' 
-#' Watches variables and function calls to check they are used correctly.
+#' Replaces function calls in functions.
 #' 
 #' @param f
 #'    a function whose introspection is watched.
-#' @param verify
-#'    constraint that each variable or function call to be satisfied given as a list
-#' @param violate
-#'    action when the verification is not passed.
+#' @param replacement
+#'    function (or value) list to replace.
 #' 
 #' @examples
-#' f <- function(x, y) x + y
-#' mf <- mock(f, list(x = quote(x > 2)))
-#' mf(3, 1)
-#' \dontrun{
-#' mf(1, 2)
+#' f <- function(x, y) {
+#'    a <- g(x)
+#'    b <- h(x, y)
+#'    a + b
 #' }
-#' 
-#' g <- function(z) f(z + 1, z - 1)
-#' mg <- mock(g, list(f = list(x = quote(x > 1))))
-#' mg(1)
-#' \dontrun{
-#' mg(0)
-#' }
+#' sf <- mock(f, list(g=1, h=2))
+#' sf()
 #' 
 #' @export
-mock <- function(f, verify, violate=stopifnot) {
-   if (missing(verify)) {
-      verify <- list()
+mock <- function(f, replacement) {
+   if (missing(replacement)) {
+      replacement <- list()
    }
    env <- parent.frame()
-   violate <- substitute(violate)
-
+   replacement <- substitute(replacement)
+   if (length(replacement) > 1L) {
+      replacement <- as.list(replacement)[-1L]
+   } else {
+      replacement <- eval(replacement, envir=env)
+   }
+   
    traverse <- function(x) {
       switch(class(x),
          "(" = {
@@ -48,55 +45,32 @@ mock <- function(f, verify, violate=stopifnot) {
             x[[3L]] <- traverse(x[[3L]])
             x
          },
-         ## invariant condition
          "name" = {
-            name <- as.character(x)
-            if (!is.null(verify[[name]])) {
-               arg <- if (name == "...") { quote(list(...)) } else { x }
-               substitute(
-                  {
-                     violate(verify)
-                     x
-                  },
-                  list(violate=violate, verify=verify[[name]], x=arg)
-               )
-            } else {
-               x
-            }
+            x
          },
-         ## call verification
+         ## call is stubbed
          "call" = {
             name <- as.character(as.list(x)[[1L]])
-            if (!is.null(verify[[name]])) {
-               f <- get(name, envir=env)
-               call <- match.call(f, x, TRUE)
-               dotIndex <- 1L
-               for (index in seq_along(call)[-1L]) {
-                  param <- names(call)[index]
-                  if (param == "") {
-                     param <- sprintf("..%d", dotIndex)
-                     dotIndex <- dotIndex + 1L
+            if (!is.null(replacement[[name]])) {
+               r <- replacement[[name]]
+               if (is.call(r)) {
+                  value <- eval(r, envir=env)
+                  if (is.function(value)) {
+                     x[[1L]] <- value
+                  } else {
+                     x <- value
                   }
-                  if (param %in% names(verify[[name]])) {
-                     table <- list()
-                     table[[param]] <- call[[index]]
-                     v <- substitute.variable(verify[[name]][[param]], table)
-                     call[[index]] <- substitute(
-                        {
-                           violate(verify)
-                           x
-                        },
-                        list(violate=violate, verify=v, x=call[[index]])
-                     )
-                  }
+               } else if (is.name(r)) {
+                  x[[1L]] <- get(as.character(r), envir=env)
+               } else {
+                  x <- r
                }
-               substitute(eval(call), list(call=call))
             } else {
                for (i in seq_along(x)[-1L]) {
                   x[[i]] <- traverse(x[[i]])
                }
-               x
             }
+            x
          },
          "if" = {
             for (i in seq_along(x)[-1L]) {

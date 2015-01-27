@@ -2,33 +2,25 @@
 % Please edit documentation in R/mock.R
 \name{mock}
 \alias{mock}
-\title{Mocking}
+\title{Stubbing}
 \usage{
-mock(f, verify, violate = stopifnot)
+mock(f, replacement)
 }
 \arguments{
 \item{f}{a function whose introspection is watched.}
 
-\item{verify}{constraint that each variable or function call to be satisfied given as a list}
-
-\item{violate}{action when the verification is not passed.}
+\item{replacement}{function (or value) list to replace.}
 }
 \description{
-Watches variables and function calls to check they are used correctly.
+Replaces function calls in functions.
 }
 \examples{
-f <- function(x, y) x + y
-mf <- mock(f, list(x = quote(x > 2)))
-mf(3, 1)
-\dontrun{
-mf(1, 2)
+f <- function(x, y) {
+   a <- g(x)
+   b <- h(x, y)
+   a + b
 }
-
-g <- function(z) f(z + 1, z - 1)
-mg <- mock(g, list(f = list(x = quote(x > 1))))
-mg(1)
-\dontrun{
-mg(0)
-}
+sf <- mock(f, list(g=1, h=2))
+sf()
 }
 

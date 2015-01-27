@@ -18,18 +18,18 @@ devtools::install_github("kos59125/Mock-n-Moll")
 Examples
 --------
 
-### mock
+### guard
    
 ```r
 library(MockNMoll)
 
 f <- function(x, y) x + y
-mf <- mock(f, list(x = quote(x > 2)))
+mf <- guard(f, list(x = quote(x > 2)))
 mf(3, 1)
 ## mf(1, 2)
 
 g <- function(z) f(z + 1, z - 1)
-mg <- mock(g, list(f = list(x = quote(x >= 1))))
+mg <- guard(g, list(f = list(x = quote(x >= 1))))
 mg(1)
 ## mg(0)
 ```
@@ -41,12 +41,12 @@ library(MockNMoll)
 library(testthat)
 
 f <- function(x) x
-m <- mock(f, list(x = quote(x > 0)), expect_true)
+m <- guard(f, list(x = quote(x > 0)), expect_true)
 m(1)
 ## m(0)
 ```
 
-### stub
+### mock
 
 ```r
 library(MockNMoll)
@@ -56,7 +56,7 @@ f <- function(x, y) {
    b <- h(x, y)
    a + b
 }
-s <- stub(f, list(g=1, h=function(x, y) x + y))
+s <- mock(f, list(g=1, h=function(x, y) x + y))
 s(0, 0)
 ```
 
@@ -72,6 +72,6 @@ f <- function() {
       "Happy New Year"
    }
 }
-newYearTest <- stub(f, list(Sys.Date=as.Date("2010-01-01")))
+newYearTest <- mock(f, list(Sys.Date=as.Date("2010-01-01")))
 expect_equal(newYearTest(), "Happy New Year")
 ```
